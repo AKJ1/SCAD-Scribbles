@@ -2,18 +2,18 @@ use <threads.scad>
 use <arc.scad>
 // Coin Parameters [diameter, thickness]
 coin_dimensions = [
-    [26.50 + 0.55, 2.2], // 2lv
-    [24.50 + 0.55, 2.0], // 1lv
-    [22.50 + 0.55, 1.65], // 0.5lv
-    [20.50 + 0.55, 1.60], // 0.2lv
-    [18.50 + 0.55, 1.55] // 0.1lv
+    [26.50 + 0.6, 2.34], // 2lv
+    [24.50 + 0.6, 2.0], // 1lv
+    [22.50 + 0.60, 1.75], // 0.5lv
+    [20.50 + 0.60, 1.70], // 0.2lv
+    [18.50 + 0.60, 1.60] // 0.1lv
 ];
 
-mode = "test"; // Available options : tubeandcap, coin, tube, sorter, cap
+mode = "tube"; // Available options : tubeandcap, coin, tube, sorter, cap
 
 // Common Parameters
-coin_index = 4; // which coin to make a tube for
-coin_count = 25; 
+coin_index = 1; // which coin to make a tube for
+coin_count = 50; 
 wall_thickness = 2; 
 screw_length = 0; // Leave 0 for symmetric cap & body
 smooth = 6;
@@ -24,11 +24,13 @@ lip_thickness=2;
 cap_screw_length = 0; // Leave 0 for symmetric cap & body
 cap_thread_offset = 1;
 
+coin_depth_compensation = 0.2;
+
 // Lip is midpoint, entire thing should be symetrical todo: the math
 
 // translate([20, 0, 0]) {
-if(mode == "test"){
-
+if(mode == "test")
+{
     color("green")
     difference(){
         coin_tube(coin_diamater = coin_dimensions[coin_index][0]
@@ -38,6 +40,7 @@ if(mode == "test"){
         , lip_thickness = lip_thickness
         , lip_girth = lip_girth
         , smooth = smooth
+        , height_tolerance = coin_depth_compensation
         , coin_count = coin_count);
         translate([0,-50,0])
         {
@@ -56,6 +59,7 @@ if(mode == "test"){
             , screw_length = cap_screw_length
             , wall_thickness = wall_thickness
             , thread_offset = cap_thread_offset
+            , height_tolerance = coin_depth_compensation
             );
         }
         translate([0,-50,0])
@@ -73,6 +77,7 @@ if(mode == "tube" || mode == "tubeandcap"){
     , lip_thickness = lip_thickness
     , lip_girth = lip_girth
     , smooth = smooth
+    , height_tolerance = coin_depth_compensation
     , coin_count = coin_count);
 }
 
@@ -85,14 +90,15 @@ if(mode == "cap" || mode == "tubeandcap"){
         , screw_length = cap_screw_length
         , wall_thickness = wall_thickness
         , thread_offset = cap_thread_offset
+        , height_tolerance = coin_depth_compensation
         );
     }
 }
 
 module coin_tube(coin_count=10, coin_diamater=25, coin_thickness=2.5,
- wall_thickness=2, res = 10, lip_thickness = 2, lip_girth=8, screw_length = 0, smooth = 6)
+ wall_thickness=2, res = 10, lip_thickness = 2, lip_girth=8, screw_length = 0, smooth = 6, height_tolerance = 0.2)
 {
-    holder_height = coin_thickness * coin_count - lip_thickness/2;
+    holder_height = coin_thickness * coin_count - lip_thickness + height_tolerance;
     sl = screw_length == 0 ? holder_height/2 : screw_length;
     hh = holder_height - sl;
     // if(){
@@ -142,18 +148,18 @@ module coin_tube(coin_count=10, coin_diamater=25, coin_thickness=2.5,
                     // }
                 }
             }
-            translate([0, 0, wall_thickness-smooth/2]) {
+            translate([0, 0, wall_thickness-smooth/4]) {
                 cylinder(d=coin_diamater, h=holder_height+sl+smooth);
             }
         }
     }
 }
 
-module tube_cap(coin_count = 10, coin_diameter=25, coin_thickness = 2.5, lip_thickness = 2, screw_length=0, smooth = 6, wall_thickness = 2, thread_offset = 1)
+module tube_cap(coin_count = 10, coin_diameter=25, coin_thickness = 2.5, lip_thickness = 2, screw_length=0, smooth = 6, wall_thickness = 2, thread_offset = 1, height_tolerance = 0.2)
 {
     if(coin_count > 0)
     {
-        holder_height = coin_thickness * coin_count - lip_thickness/2;
+        holder_height = coin_thickness * coin_count - lip_thickness + height_tolerance;
         sl = screw_length == 0 ? holder_height/2 : screw_length;
         hh = holder_height - sl;
         cd = coin_diameter + wall_thickness;
@@ -168,7 +174,7 @@ module tube_cap(coin_count = 10, coin_diameter=25, coin_thickness = 2.5, lip_thi
                 translate([0,0,-pitch]){
                     difference(){
                         metric_thread(length = sl*2, angle = 45, pitch = pitch, diameter = cd + pitch/2 + thread_offset, internal = true);
-                        translate([0,0,wall_thickness+smooth/4-thread_offset+0.4-100]){
+                        translate([0,0,wall_thickness+smooth/2-thread_offset-0.2-100]){
                             cylinder(h=100, d = cd*2);
                         }
                     }
